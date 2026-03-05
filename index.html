@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PayCollect — Screen 02: Collect Payments · Request List & Status Overview</title>
+  <style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#0f3460;--red:#e94560;--bg:#f0f2f7;--side:#16213e;--border:#e2e8f0;--white:#fff;--muted:#6b7280;--trans:0.22s cubic-bezier(.4,0,.2,1)}
+html,body{height:100%;font-family:"DM Sans",sans-serif;background:var(--bg);overflow:hidden}
+.app{display:grid;grid-template-columns:240px 1fr;grid-template-rows:54px 1fr;height:100vh}
+.topbar{grid-column:1/-1;background:var(--side);display:flex;align-items:center;padding:0 20px;gap:16px;border-bottom:1px solid rgba(255,255,255,.07)}
+.tb-logo{font-family:"Syne",sans-serif;font-weight:800;font-size:.95rem;color:#fff;letter-spacing:-.3px;min-width:160px;display:flex;align-items:center;gap:8px}
+.tb-logo-pill{background:var(--red);color:#fff;font-size:.58rem;font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:.8px;text-transform:uppercase}
+.tb-progress{flex:1;max-width:440px;height:3px;background:rgba(255,255,255,.1);border-radius:20px;overflow:hidden}
+.tb-fill{height:100%;background:linear-gradient(90deg,var(--red),#ff7a8a);border-radius:20px;transition:width var(--trans)}
+.tb-label{color:rgba(255,255,255,.4);font-size:.72rem;font-family:"DM Mono",monospace;white-space:nowrap}
+.tb-right{margin-left:auto;display:flex;gap:8px}
+.tb-btn{font-family:"DM Sans",sans-serif;font-size:.75rem;font-weight:600;padding:5px 13px;border-radius:7px;cursor:pointer;border:1.5px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:rgba(255,255,255,.65);transition:all .15s}
+.tb-btn:hover{background:rgba(255,255,255,.14);color:#fff}
+.tb-btn.accent{background:var(--red);border-color:var(--red);color:#fff}
+.sidebar{background:var(--side);overflow-y:auto;padding:12px 0 20px;border-right:1px solid rgba(255,255,255,.05);scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.08) transparent}
+.sidebar::-webkit-scrollbar{width:3px}
+.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:20px}
+.nav-group{margin-bottom:2px}
+.nav-group-label{padding:8px 18px 4px;font-size:.62rem;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;color:rgba(255,255,255,.28);display:flex;align-items:center;gap:6px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 14px 7px 18px;cursor:pointer;border-left:3px solid transparent;transition:all .14s;user-select:none}
+.nav-item:hover{background:rgba(255,255,255,.05)}
+.nav-item.active{background:rgba(233,69,96,.14);border-left-color:var(--red)}
+.nav-item.active .nav-num{color:var(--red)}
+.nav-item.active .nav-name{color:#fff;font-weight:600}
+.nav-num{font-family:"DM Mono",monospace;font-size:.62rem;color:rgba(255,255,255,.22);min-width:20px}
+.nav-name{font-size:.76rem;color:rgba(255,255,255,.5);line-height:1.3}
+.main{overflow:hidden;position:relative;background:var(--bg)}
+.welcome{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(150deg,#eef4ff,#f7f8fc)}
+.wc{background:#fff;border-radius:20px;padding:34px 42px;max-width:440px;width:100%;text-align:center;box-shadow:0 12px 60px rgba(15,52,96,.12);border:1.5px solid rgba(15,52,96,.06)}
+.wc-logo{font-family:"Syne",sans-serif;font-weight:800;font-size:1.4rem;color:var(--navy);letter-spacing:-1px;margin-bottom:5px}
+.wc-logo span{color:var(--red)}
+.wc-sub{font-size:.78rem;color:var(--muted);margin-bottom:20px;line-height:1.6}
+.wc-stats{display:flex;border:1.5px solid var(--border);border-radius:11px;overflow:hidden;margin-bottom:16px}
+.wc-stat{flex:1;padding:10px 6px;border-right:1px solid var(--border);text-align:center}
+.wc-stat:last-child{border-right:none}
+.wc-stat-n{font-family:"Syne",sans-serif;font-weight:800;font-size:1.15rem;color:var(--navy)}
+.wc-stat-l{font-size:.57rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.wc-rows{display:flex;flex-direction:column;gap:5px;margin-bottom:20px;text-align:left}
+.wc-row{display:flex;align-items:center;gap:10px;padding:8px 11px;background:var(--bg);border-radius:8px;cursor:pointer;transition:all .15s;border:1.5px solid transparent}
+.wc-row:hover{border-color:var(--navy);background:#eef4ff}
+.wc-icon{font-size:1rem;width:22px;text-align:center}
+.wc-info{flex:1}
+.wc-name{font-family:"Syne",sans-serif;font-weight:700;font-size:.77rem;color:var(--navy)}
+.wc-count{font-size:.63rem;color:var(--muted)}
+.wc-arrow{color:var(--muted);font-size:.74rem}
+.wc-start{width:100%;padding:10px;background:var(--navy);color:#fff;border:none;border-radius:10px;font-family:"Syne",sans-serif;font-weight:700;font-size:.84rem;cursor:pointer;transition:all .18s;margin-bottom:6px}
+.wc-start:hover{background:#0d2a4f;transform:translateY(-1px)}
+.wc-hint{font-size:.65rem;color:var(--muted)}
+.panel{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden}
+.panel.in{animation:slideIn var(--trans) both}
+.panel.out{animation:slideOut var(--trans) both}
+.panel.in-back{animation:slideInBack var(--trans) both}
+.panel.out-back{animation:slideOutBack var(--trans) both}
+@keyframes slideIn{from{opacity:0;transform:translateX(26px)}to{opacity:1;transform:none}}
+@keyframes slideOut{from{opacity:1;transform:none}to{opacity:0;transform:translateX(-26px)}}
+@keyframes slideInBack{from{opacity:0;transform:translateX(-26px)}to{opacity:1;transform:none}}
+@keyframes slideOutBack{from{opacity:1;transform:none}to{opacity:0;transform:translateX(26px)}}
+.panel-meta{display:flex;align-items:center;gap:10px;padding:8px 16px;background:#fff;border-bottom:1px solid var(--border);flex-shrink:0}
+.meta-tag{background:var(--red);color:#fff;font-size:.6rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.meta-title{font-size:.81rem;font-weight:600;color:var(--navy);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.panel-frame{flex:1;overflow-y:auto;overflow-x:hidden;padding:10px 16px 4px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.panel-frame::-webkit-scrollbar{width:4px}
+.panel-frame::-webkit-scrollbar-thumb{background:var(--border);border-radius:20px}
+.panel-frame .screen{width:100%;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.09)}
+.panel-foot{display:flex;align-items:center;justify-content:space-between;padding:7px 16px 9px;background:#fff;border-top:1px solid var(--border);flex-shrink:0;gap:10px}
+.nav-btn{font-family:"DM Sans",sans-serif;font-size:.75rem;font-weight:600;padding:6px 15px;border-radius:7px;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--navy);min-width:80px;transition:all .14s}
+.nav-btn:hover:not(:disabled){border-color:var(--navy);background:var(--navy);color:#fff}
+.nav-btn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
+.nav-btn.primary:hover:not(:disabled){background:#0d2a4f}
+.nav-btn:disabled{opacity:.3;cursor:not-allowed}
+.dots{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;flex:1;max-width:420px}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--border);cursor:pointer;transition:all .16s;flex-shrink:0}
+.dot:hover{background:var(--muted);transform:scale(1.3)}
+.dot.active{background:var(--red);transform:scale(1.4)}
+/* ── shared screen styles ── */
+.screen{background:#fff;border-radius:14px;box-shadow:0 4px 24px rgba(0,0,0,.1);overflow:hidden;border:1px solid #e2e8f0}
+.nav{background:#0f3460;display:flex;align-items:center;gap:20px;padding:0 20px;height:50px;flex-shrink:0}
+.nav .logo{color:#fff;font-weight:800;font-size:.95rem;letter-spacing:-.5px;white-space:nowrap}
+.nav a{color:#a8b4d0;font-size:.78rem;text-decoration:none;white-space:nowrap;padding:4px 0}
+.nav a.active{color:#fff;border-bottom:2px solid #e94560;padding-bottom:2px}
+.nav .right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.avatar{width:28px;height:28px;border-radius:50%;background:#e94560;color:#fff;font-size:.7rem;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
+.page-header{padding:18px 22px 0;display:flex;align-items:center;justify-content:space-between}
+.page-title{font-size:1.15rem;font-weight:700;color:#1a1a2e}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 15px;border-radius:7px;font-size:.8rem;font-weight:600;cursor:pointer;border:none;font-family:"DM Sans",sans-serif}
+.btn:hover{filter:brightness(1.07);transform:translateY(-1px)}
+.btn-primary{background:#e94560;color:#fff}
+.btn-secondary{background:#f0f4ff;color:#0f3460;border:1px solid #c7d2f0}
+.btn-outline{background:#fff;color:#0f3460;border:1.5px solid #0f3460}
+.form-wrap{padding:20px}
+.form-row{display:flex;gap:14px;margin-bottom:12px}
+.form-group{flex:1}
+.form-group label{display:block;font-size:.72rem;font-weight:700;color:#0f3460;margin-bottom:4px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:8px 10px;border:1.5px solid #dde1ea;border-radius:7px;font-size:.82rem;color:#333;background:#fff;font-family:"DM Sans",sans-serif}
+.form-group textarea{height:66px;resize:none}
+.form-divider{font-size:.68rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin:16px 0 12px;padding-bottom:5px;border-bottom:1px dashed #dde1ea}
+.badge{display:inline-block;background:#e94560;color:#fff;font-size:.7rem;font-weight:700;padding:3px 9px;border-radius:20px;margin-top:14px;letter-spacing:1px;text-transform:uppercase}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#0f3460;--red:#e94560;--bg:#f0f2f7;--side:#16213e;--border:#e2e8f0;--white:#fff;--muted:#6b7280;--trans:0.25s cubic-bezier(.4,0,.2,1)}
+html,body{height:100%;font-family:"DM Sans",sans-serif;background:var(--bg);overflow:hidden}
+.app{display:grid;grid-template-columns:240px 1fr;grid-template-rows:54px 1fr;height:100vh}
+.topbar{grid-column:1/-1;background:var(--side);display:flex;align-items:center;padding:0 20px;gap:16px;border-bottom:1px solid rgba(255,255,255,.07)}
+.tb-logo{font-family:"Syne",sans-serif;font-weight:800;font-size:.95rem;color:#fff;letter-spacing:-.3px;min-width:160px;display:flex;align-items:center;gap:8px}
+.tb-logo-pill{background:var(--red);color:#fff;font-size:.58rem;font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:.8px;text-transform:uppercase}
+.tb-progress{flex:1;max-width:440px;height:3px;background:rgba(255,255,255,.1);border-radius:20px;overflow:hidden}
+.tb-fill{height:100%;background:linear-gradient(90deg,var(--red),#ff7a8a);border-radius:20px;transition:width var(--trans)}
+.tb-label{color:rgba(255,255,255,.4);font-size:.72rem;font-family:"DM Mono",monospace;white-space:nowrap}
+.tb-right{margin-left:auto;display:flex;gap:8px}
+.tb-btn{font-family:"DM Sans",sans-serif;font-size:.75rem;font-weight:600;padding:5px 13px;border-radius:7px;cursor:pointer;border:1.5px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:rgba(255,255,255,.65);transition:all .15s}
+.tb-btn:hover{background:rgba(255,255,255,.14);color:#fff}
+.tb-btn.accent{background:var(--red);border-color:var(--red);color:#fff}
+.sidebar{background:var(--side);overflow-y:auto;padding:12px 0 20px;border-right:1px solid rgba(255,255,255,.05);scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.08) transparent}
+.sidebar::-webkit-scrollbar{width:3px}
+.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:20px}
+.nav-group{margin-bottom:2px}
+.nav-group-label{padding:8px 18px 4px;font-size:.62rem;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;color:rgba(255,255,255,.28);display:flex;align-items:center;gap:6px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 14px 7px 18px;cursor:pointer;border-left:3px solid transparent;transition:all .14s;user-select:none}
+.nav-item:hover{background:rgba(255,255,255,.05)}
+.nav-item.active{background:rgba(233,69,96,.14);border-left-color:var(--red)}
+.nav-item.active .nav-num{color:var(--red)}
+.nav-item.active .nav-name{color:#fff;font-weight:600}
+.nav-num{font-family:"DM Mono",monospace;font-size:.62rem;color:rgba(255,255,255,.22);min-width:20px}
+.nav-name{font-size:.76rem;color:rgba(255,255,255,.5);line-height:1.3}
+.main{overflow:hidden;position:relative;background:var(--bg)}
+.welcome{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(150deg,#eef4ff,#f7f8fc)}
+.wc{background:#fff;border-radius:20px;padding:40px 48px;max-width:460px;width:100%;text-align:center;box-shadow:0 12px 60px rgba(15,52,96,.12);border:1.5px solid rgba(15,52,96,.06)}
+.wc-logo{font-family:"Syne",sans-serif;font-weight:800;font-size:1.5rem;color:var(--navy);letter-spacing:-1px;margin-bottom:6px}
+.wc-logo span{color:var(--red)}
+.wc-sub{font-size:.82rem;color:var(--muted);margin-bottom:24px;line-height:1.6}
+.wc-stats{display:flex;border:1.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px}
+.wc-stat{flex:1;padding:11px 8px;border-right:1px solid var(--border);text-align:center}
+.wc-stat:last-child{border-right:none}
+.wc-stat-n{font-family:"Syne",sans-serif;font-weight:800;font-size:1.25rem;color:var(--navy)}
+.wc-stat-l{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.wc-rows{display:flex;flex-direction:column;gap:7px;margin-bottom:24px;text-align:left}
+.wc-row{display:flex;align-items:center;gap:11px;padding:9px 13px;background:var(--bg);border-radius:9px;cursor:pointer;transition:all .15s;border:1.5px solid transparent}
+.wc-row:hover{border-color:var(--navy);background:#eef4ff}
+.wc-icon{font-size:1.05rem;width:26px;text-align:center}
+.wc-info{flex:1}
+.wc-name{font-family:"Syne",sans-serif;font-weight:700;font-size:.8rem;color:var(--navy)}
+.wc-count{font-size:.66rem;color:var(--muted)}
+.wc-arrow{color:var(--muted);font-size:.78rem}
+.wc-start{width:100%;padding:11px;background:var(--navy);color:#fff;border:none;border-radius:10px;font-family:"Syne",sans-serif;font-weight:700;font-size:.88rem;cursor:pointer;transition:all .18s;margin-bottom:8px}
+.wc-start:hover{background:#0d2a4f;transform:translateY(-1px)}
+.wc-hint{font-size:.68rem;color:var(--muted)}
+.panel{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden}
+.panel.in{animation:slideIn var(--trans) both}
+.panel.out{animation:slideOut var(--trans) both}
+.panel.in-back{animation:slideInBack var(--trans) both}
+.panel.out-back{animation:slideOutBack var(--trans) both}
+@keyframes slideIn{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes slideOut{from{opacity:1;transform:none}to{opacity:0;transform:translateX(-28px)}}
+@keyframes slideInBack{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:none}}
+@keyframes slideOutBack{from{opacity:1;transform:none}to{opacity:0;transform:translateX(28px)}}
+.panel-meta{display:flex;align-items:center;gap:10px;padding:10px 20px;background:#fff;border-bottom:1px solid var(--border);flex-shrink:0}
+.meta-tag{background:var(--red);color:#fff;font-size:.62rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.meta-title{font-size:.84rem;font-weight:600;color:var(--navy);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.panel-frame{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 20px 6px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.panel-frame::-webkit-scrollbar{width:4px}
+.panel-frame::-webkit-scrollbar-thumb{background:var(--border);border-radius:20px}
+.panel-frame .screen{width:100%;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.09)}
+.panel-foot{display:flex;align-items:center;justify-content:space-between;padding:9px 20px 11px;background:#fff;border-top:1px solid var(--border);flex-shrink:0;gap:12px}
+.nav-btn{font-family:"DM Sans",sans-serif;font-size:.78rem;font-weight:600;padding:7px 18px;border-radius:8px;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--navy);min-width:100px;transition:all .15s}
+.nav-btn:hover:not(:disabled){border-color:var(--navy);background:var(--navy);color:#fff}
+.nav-btn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
+.nav-btn.primary:hover:not(:disabled){background:#0d2a4f}
+.nav-btn:disabled{opacity:.3;cursor:not-allowed}
+.dots{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;flex:1;max-width:380px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--border);cursor:pointer;transition:all .18s;flex-shrink:0}
+.dot:hover{background:var(--muted);transform:scale(1.2)}
+.dot.active{background:var(--red);transform:scale(1.3)}
+.panel-frame .btn{transition:all .15s!important}
+.panel-frame .btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a2e; background: #f5f7fb; }
+
+  /* Cover */
+  .cover { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%); color: #fff; padding: 80px 60px; min-height: 260px; }
+  .cover h1 { font-size: 2.6rem; font-weight: 700; letter-spacing: -0.5px; }
+  .cover p { font-size: 1rem; color: #a8b4d0; margin-top: 10px; }
+  .badge { display: inline-block; background: #e94560; color: #fff; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; margin-top: 16px; letter-spacing: 1px; text-transform: uppercase; }
+
+  /* Layout */
+  .container { max-width: 1100px; margin: 0 auto; padding: 40px 30px; }
+  h2 { font-size: 1.5rem; font-weight: 700; color: #0f3460; border-left: 4px solid #e94560; padding-left: 14px; margin: 40px 0 16px; }
+  h3 { font-size: 1.1rem; font-weight: 700; color: #16213e; margin: 24px 0 10px; }
+  p { font-size: 0.93rem; line-height: 1.7; color: #444; margin-bottom: 10px; }
+  ul { padding-left: 20px; margin-bottom: 12px; }
+  li { font-size: 0.92rem; line-height: 1.7; color: #444; margin-bottom: 4px; }
+
+  /* Cards */
+  .card-row { display: flex; gap: 18px; flex-wrap: wrap; margin: 20px 0; }
+  .card { background: #fff; border-radius: 12px; padding: 22px 20px; flex: 1; min-width: 220px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); border-top: 3px solid #0f3460; }
+  .card h4 { font-size: 0.85rem; font-weight: 700; color: #e94560; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+  .card p { font-size: 0.88rem; color: #555; margin: 0; }
+
+  /* Status pill */
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+  .pill-pending { background: #fff3cd; color: #856404; }
+  .pill-partial { background: #cfe2ff; color: #084298; }
+  .pill-paid    { background: #d1e7dd; color: #0a3622; }
+  .pill-failed  { background: #f8d7da; color: #842029; }
+
+  /* ─── WIREFRAMES ─── */
+  .wf-section { margin: 40px 0; }
+  .wf-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #e94560; margin-bottom: 10px; }
+  .wf-title { font-size: 1.15rem; font-weight: 700; color: #0f3460; margin-bottom: 20px; }
+
+  .screen { background: #fff; border-radius: 14px; box-shadow: 0 4px 24px rgba(0,0,0,0.10); overflow: hidden; border: 1px solid #e2e8f0; }
+
+  /* Nav bar */
+  .nav { background: #0f3460; display: flex; align-items: center; gap: 24px; padding: 0 24px; height: 52px; }
+  .nav .logo { color: #fff; font-weight: 800; font-size: 1rem; letter-spacing: -0.5px; }
+  .nav a { color: #a8b4d0; font-size: 0.82rem; text-decoration: none; }
+  .nav a.active { color: #fff; border-bottom: 2px solid #e94560; padding-bottom: 2px; }
+  .nav .right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: #e94560; color: #fff; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+
+  /* Page header */
+  .page-header { padding: 22px 24px 0; display: flex; align-items: center; justify-content: space-between; }
+  .page-title { font-size: 1.2rem; font-weight: 700; color: #1a1a2e; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: 8px; font-size: 0.82rem; font-weight: 600; cursor: pointer; border: none; }
+  .btn-primary { background: #e94560; color: #fff; }
+  .btn-secondary { background: #f0f4ff; color: #0f3460; border: 1px solid #c7d2f0; }
+  .btn-outline { background: #fff; color: #0f3460; border: 1.5px solid #0f3460; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 0; padding: 18px 24px 0; border-bottom: 1.5px solid #e9ecef; }
+  .tab { padding: 8px 18px; font-size: 0.83rem; font-weight: 600; color: #666; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1.5px; }
+  .tab.active { color: #0f3460; border-bottom-color: #e94560; }
+
+  /* Search + filter bar */
+  .filter-bar { display: flex; gap: 10px; padding: 16px 24px; align-items: center; }
+  .search-box { flex: 1; background: #f5f7fb; border: 1px solid #dde1ea; border-radius: 8px; padding: 8px 14px; font-size: 0.83rem; color: #888; display: flex; align-items: center; gap: 8px; }
+  .filter-chip { padding: 6px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; border: 1px solid #dde1ea; background: #fff; color: #555; }
+  .filter-chip.active { background: #0f3460; color: #fff; border-color: #0f3460; }
+
+  /* Stats row */
+  .stats-row { display: flex; gap: 16px; padding: 0 24px 16px; flex-wrap: wrap; }
+  .stat-box { flex: 1; min-width: 130px; background: #f5f7fb; border-radius: 10px; padding: 14px 16px; }
+  .stat-box .val { font-size: 1.4rem; font-weight: 800; color: #0f3460; }
+  .stat-box .lbl { font-size: 0.72rem; color: #888; margin-top: 2px; }
+
+  /* Table */
+  .tbl { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  .tbl th { background: #f8faff; color: #0f3460; font-weight: 700; padding: 10px 14px; text-align: left; border-bottom: 1.5px solid #e2e8f0; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.6px; }
+  .tbl td { padding: 11px 14px; border-bottom: 1px solid #f0f2f7; color: #333; vertical-align: middle; }
+  .tbl tr:last-child td { border-bottom: none; }
+  .tbl tr:hover td { background: #f8f9ff; }
+
+  /* Side panel */
+  .panel-wrap { display: flex; }
+  .panel-main { flex: 1; }
+  .side-panel { width: 280px; background: #f8faff; border-left: 1.5px solid #e2e8f0; padding: 20px 18px; }
+  .side-panel h4 { font-size: 0.78rem; font-weight: 700; color: #e94560; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; }
+  .detail-row { margin-bottom: 12px; }
+  .detail-row .key { font-size: 0.73rem; color: #888; margin-bottom: 2px; }
+  .detail-row .val { font-size: 0.85rem; font-weight: 600; color: #1a1a2e; }
+
+  /* Progress bar */
+  .progress-wrap { margin: 10px 0; }
+  .progress-track { background: #e2e8f0; border-radius: 10px; height: 8px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 10px; background: linear-gradient(90deg, #0f3460, #e94560); }
+
+  /* Form */
+  .form-wrap { padding: 24px; }
+  .form-row { display: flex; gap: 16px; margin-bottom: 14px; }
+  .form-group { flex: 1; }
+  .form-group label { display: block; font-size: 0.75rem; font-weight: 700; color: #0f3460; margin-bottom: 5px; }
+  .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 9px 12px; border: 1.5px solid #dde1ea; border-radius: 8px; font-size: 0.85rem; color: #333; background: #fff; }
+  .form-group textarea { height: 70px; resize: none; }
+  .form-divider { font-size: 0.72rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 1px; margin: 20px 0 14px; padding-bottom: 6px; border-bottom: 1px dashed #dde1ea; }
+
+  /* Upload zone */
+  .upload-zone { border: 2px dashed #c7d2f0; border-radius: 12px; padding: 40px 20px; text-align: center; background: #f8faff; margin: 16px 24px 24px; }
+  .upload-icon { font-size: 2.5rem; margin-bottom: 10px; }
+  .upload-zone p { font-size: 0.87rem; color: #555; }
+  .upload-zone .hint { font-size: 0.75rem; color: #999; margin-top: 6px; }
+  .upload-btn-row { display: flex; justify-content: center; gap: 12px; margin-top: 16px; }
+
+  /* Preview table (upload result) */
+  .preview-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px 0; }
+  .preview-header span { font-size: 0.85rem; color: #555; }
+
+  /* Notification dot */
+  .notif { width: 8px; height: 8px; background: #e94560; border-radius: 50%; display: inline-block; }
+
+  /* Timeline */
+  .timeline { padding: 0 0 0 14px; border-left: 2px solid #e2e8f0; margin: 10px 0; }
+  .tl-item { position: relative; padding: 0 0 14px 18px; }
+  .tl-dot { position: absolute; left: -19px; top: 3px; width: 10px; height: 10px; border-radius: 50%; background: #0f3460; border: 2px solid #fff; box-shadow: 0 0 0 2px #0f3460; }
+  .tl-dot.green { background: #198754; box-shadow: 0 0 0 2px #198754; }
+  .tl-time { font-size: 0.68rem; color: #999; }
+  .tl-text { font-size: 0.82rem; color: #333; margin-top: 1px; }
+
+  /* Screen arrow flow */
+  .flow-wrap { display: flex; align-items: flex-start; gap: 0; overflow-x: auto; padding: 10px 0 20px; }
+  .flow-item { flex: 0 0 200px; }
+  .flow-arrow { flex: 0 0 30px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: #aaa; padding-top: 60px; }
+  .flow-box { background: #fff; border: 1.5px solid #c7d2f0; border-radius: 10px; padding: 16px 14px; text-align: center; cursor: default; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .flow-box.highlight { border-color: #e94560; box-shadow: 0 0 0 3px rgba(233,69,96,0.15); }
+  .flow-box .icon { font-size: 1.8rem; margin-bottom: 6px; }
+  .flow-box h5 { font-size: 0.82rem; font-weight: 700; color: #0f3460; }
+  .flow-box p { font-size: 0.72rem; color: #888; margin-top: 4px; }
+
+  /* Footer note */
+  .spec-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .spec-table th { background: #0f3460; color: #fff; padding: 10px 14px; text-align: left; }
+  .spec-table td { padding: 9px 14px; border-bottom: 1px solid #eee; vertical-align: top; }
+  .spec-table tr:nth-child(even) td { background: #f8faff; }
+
+  .section-bg { background: #fff; border-radius: 14px; padding: 24px; margin-bottom: 30px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+
+  @media print { body { background: #fff; } .cover { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+
+.panel-frame .wf-section{margin:0}
+.panel-frame .screen{border-radius:12px;margin:0}
+
+</style>
+</head>
+<body style="background:#f0f4f8; padding: 40px 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+
+  <div style="max-width: 1100px; margin: 0 auto;">
+    <div style="margin-bottom: 20px;">
+      <div style="font-size: 0.75rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">PayCollect Mockup</div>
+      <h1 style="font-size: 1.4rem; font-weight: 800; color: #0f3460; margin: 0;">Screen 02 — Collect Payments: Request List &amp; Status Overview</h1>
+    </div>
+
+    <div class="panel" id="panel-1" style="display:block;">
+      <div class="panel-meta">
+        <span class="meta-tag">Screen 1 of 6</span>
+    <span class="meta-title">Collect Payments — Request List &amp; Status Overview</span>
+  </div>
+  <div class="panel-frame"><div class="screen"><div class="nav"><span class="logo">PayCollect</span><a href="#">⬛ Dashboard</a><a href="#" class="active">💳 Collect Payments</a><a href="#">👥 Customers</a><a href="#">📊 Reports</a><div class="right"><div style="position:relative;cursor:pointer;margin-right:4px;"><span style="font-size:.9rem;color:#a8b4d0;">🔔</span><span style="position:absolute;top:0;right:0;width:6px;height:6px;background:#e94560;border-radius:50%;border:1.5px solid #16213e;"></span></div><span style="font-size:.74rem;color:#a8b4d0;padding:0 10px;border-left:1px solid rgba(255,255,255,.12);">Maria A.</span><div class="avatar">MA</div></div></div>
+    <!-- Nav -->
+    
+
+    <!-- Page header -->
+    <div class="page-header">
+      <div class="page-title">Collect Payments</div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-secondary">⬆ Upload Excel</button>
+        <button class="btn btn-primary">+ New Request</button>
+      </div>
+    </div>
+
+    <!-- ── TIME HORIZON SELECTOR ── -->
+    <div style="padding:14px 24px 0; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <!-- Label -->
+      <span style="font-size:0.75rem; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.7px; white-space:nowrap;">Time Period:</span>
+
+      <!-- Preset chips -->
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <div style="padding:5px 13px; border-radius:20px; font-size:0.78rem; font-weight:700; background:#f5f7fb; color:#555; border:1.5px solid #dde1ea; cursor:pointer;">Today</div>
+        <div style="padding:5px 13px; border-radius:20px; font-size:0.78rem; font-weight:700; background:#f5f7fb; color:#555; border:1.5px solid #dde1ea; cursor:pointer;">7 Days</div>
+        <div style="padding:5px 13px; border-radius:20px; font-size:0.78rem; font-weight:700; background:#0f3460; color:#fff; border:1.5px solid #0f3460; cursor:pointer;">30 Days</div>
+        <div style="padding:5px 13px; border-radius:20px; font-size:0.78rem; font-weight:700; background:#f5f7fb; color:#555; border:1.5px solid #dde1ea; cursor:pointer;">90 Days</div>
+        <div style="padding:5px 13px; border-radius:20px; font-size:0.78rem; font-weight:700; background:#f5f7fb; color:#555; border:1.5px solid #dde1ea; cursor:pointer;">6 Months</div>
+        <div style="padding:5px 13px; border-radius:20px; font-size:0.78rem; font-weight:700; background:#f5f7fb; color:#555; border:1.5px solid #dde1ea; cursor:pointer;">1 Year</div>
+      </div>
+
+      <!-- Divider -->
+      <div style="width:1px; height:24px; background:#dde1ea; margin:0 4px;"></div>
+
+      <!-- Custom date range -->
+      <div style="display:flex; align-items:center; gap:6px; background:#f5f7fb; border:1.5px solid #dde1ea; border-radius:8px; padding:5px 12px;">
+        <span style="font-size:0.75rem; color:#888; font-weight:600;">Custom:</span>
+        <input type="date" value="2026-01-24" style="border:none; background:transparent; font-size:0.78rem; color:#0f3460; font-weight:600; outline:none; width:115px;">
+        <span style="font-size:0.75rem; color:#aaa;">→</span>
+        <input type="date" value="2026-02-23" style="border:none; background:transparent; font-size:0.78rem; color:#0f3460; font-weight:600; outline:none; width:115px;">
+        <button style="background:#e94560; color:#fff; border:none; border-radius:6px; padding:3px 10px; font-size:0.75rem; font-weight:700; cursor:pointer;">Apply</button>
+      </div>
+
+      <!-- Range validation hint -->
+      <span style="font-size:0.72rem; color:#aaa; white-space:nowrap;">Min: 1 day &nbsp;·&nbsp; Max: 1 year</span>
+    </div>
+
+    <!-- Active period indicator -->
+    <div style="padding:8px 24px 0; display:flex; align-items:center; gap:6px;">
+      <span style="font-size:0.75rem; color:#0f3460; font-weight:700;">📅 Showing data for:</span>
+      <span style="font-size:0.75rem; font-weight:700; color:#e94560; background:#fff0f3; padding:2px 10px; border-radius:20px; border:1px solid #f5b8c4;">24 Jan 2026 — 23 Feb 2026 &nbsp;(30 days)</span>
+      <span style="font-size:0.72rem; color:#aaa;">Stats and table reflect requests created within this period.</span>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row" style="margin-top:14px;">
+      <div class="stat-box">
+        <div class="val">142</div>
+        <div class="lbl">Total Requests</div>
+        <div style="font-size:0.68rem; color:#bbb; margin-top:3px;">in period</div>
+      </div>
+      <div class="stat-box">
+        <div class="val" style="color:#856404;">58</div>
+        <div class="lbl">Pending</div>
+        <div style="font-size:0.68rem; color:#bbb; margin-top:3px;">in period</div>
+      </div>
+      <div class="stat-box">
+        <div class="val" style="color:#084298;">24</div>
+        <div class="lbl">Partial Payments</div>
+        <div style="font-size:0.68rem; color:#bbb; margin-top:3px;">in period</div>
+      </div>
+      <div class="stat-box">
+        <div class="val" style="color:#0a3622;">54</div>
+        <div class="lbl">Fully Paid</div>
+        <div style="font-size:0.68rem; color:#bbb; margin-top:3px;">in period</div>
+      </div>
+      <div class="stat-box">
+        <div class="val" style="color:#842029;">6</div>
+        <div class="lbl">Failed / Expired</div>
+        <div style="font-size:0.68rem; color:#bbb; margin-top:3px;">in period</div>
+      </div>
+      <div class="stat-box">
+        <div class="val">₹ 8,42,500</div>
+        <div class="lbl">Total Outstanding</div>
+        <div style="font-size:0.68rem; color:#bbb; margin-top:3px;">in period</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab active">All Requests</div>
+      <div class="tab">Pending</div>
+      <div class="tab">Partial</div>
+      <div class="tab">Paid</div>
+      <div class="tab">Failed</div>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <div class="search-box">🔍 &nbsp;Search by customer name, phone, reference…</div>
+      <div class="filter-chip">Amount ▾</div>
+      <div class="filter-chip active">Status ▾</div>
+      <button class="btn btn-secondary" style="font-size:0.78rem; padding:6px 12px;">Export CSV</button>
+    </div>
+
+    <!-- Table -->
+    <div style="padding:0 24px 24px; overflow-x:auto;">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th><input type="checkbox"></th>
+            <th>Reference ID</th>
+            <th>Customer</th>
+            <th>Amount Due</th>
+            <th>Amount Paid</th>
+            <th>Payment Type</th>
+            <th>Status</th>
+            <th>Sent On</th>
+            <th>Due Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><input type="checkbox"></td>
+            <td style="font-weight:600; color:#0f3460;">REQ-20240001</td>
+            <td><div style="font-weight:600;">Priya Sharma</div><div style="font-size:0.72rem; color:#888;">+91 98765 43210</div></td>
+            <td>₹ 25,000</td>
+            <td>₹ 0</td>
+            <td>—</td>
+            <td><span class="pill pill-pending">Pending</span></td>
+            <td>19 Feb 2026</td>
+            <td>28 Feb 2026</td>
+            <td><a href="#" style="font-size:0.78rem; color:#0f3460;">View</a> &nbsp;<a href="#" style="font-size:0.78rem; color:#e94560;">Remind</a></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox"></td>
+            <td style="font-weight:600; color:#0f3460;">REQ-20240002</td>
+            <td><div style="font-weight:600;">Rajan Mehta</div><div style="font-size:0.72rem; color:#888;">+91 91234 56789</div></td>
+            <td>₹ 50,000</td>
+            <td>₹ 20,000</td>
+            <td><span class="pill pill-partial">Part Payment</span></td>
+            <td><span class="pill pill-partial">Partial</span></td>
+            <td>15 Feb 2026</td>
+            <td>25 Feb 2026</td>
+            <td><a href="#" style="font-size:0.78rem; color:#0f3460;">View</a> &nbsp;<a href="#" style="font-size:0.78rem; color:#e94560;">Remind</a></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox"></td>
+            <td style="font-weight:600; color:#0f3460;">REQ-20240003</td>
+            <td><div style="font-weight:600;">Anita Desai</div><div style="font-size:0.72rem; color:#888;">+91 99887 76655</div></td>
+            <td>₹ 12,500</td>
+            <td>₹ 12,500</td>
+            <td><span class="pill pill-paid">Full Payment</span></td>
+            <td><span class="pill pill-paid">Paid</span></td>
+            <td>10 Feb 2026</td>
+            <td>20 Feb 2026</td>
+            <td><a href="#" style="font-size:0.78rem; color:#0f3460;">View</a> &nbsp;<a href="#" style="font-size:0.78rem; color:#999; pointer-events:none;">Remind</a></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox"></td>
+            <td style="font-weight:600; color:#0f3460;">REQ-20240004</td>
+            <td><div style="font-weight:600;">Suresh Iyer</div><div style="font-size:0.72rem; color:#888;">+91 77665 54433</div></td>
+            <td>₹ 8,000</td>
+            <td>₹ 0</td>
+            <td>—</td>
+            <td><span class="pill pill-failed">Failed</span></td>
+            <td>05 Feb 2026</td>
+            <td>12 Feb 2026</td>
+            <td><a href="#" style="font-size:0.78rem; color:#0f3460;">View</a> &nbsp;<a href="#" style="font-size:0.78rem; color:#0f3460;">Resend</a></td>
+          </tr>
+        </tbody>
+      </table>
+      <!-- Pagination -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px;">
+        <span style="font-size:0.78rem; color:#888;">Showing 1–20 of 142 requests</span>
+        <div style="display:flex; gap:6px;">
+          <button class="btn btn-secondary" style="padding:5px 12px; font-size:0.78rem;">← Prev</button>
+          <button class="btn btn-primary" style="padding:5px 12px; font-size:0.78rem;">Next →</button>
+        </div>
+      </div>
+    </div>
+  </div></div>
+  <div class="panel-foot">
+    <button class="nav-btn" onclick="prev()">← Prev</button>
+    <div class="dots"><span class="dot" onclick="goTo(0)"></span><span class="dot" onclick="goTo(1)"></span><span class="dot" onclick="goTo(2)"></span><span class="dot" onclick="goTo(3)"></span><span class="dot" onclick="goTo(4)"></span><span class="dot" onclick="goTo(5)"></span><span class="dot" onclick="goTo(6)"></span><span class="dot" onclick="goTo(7)"></span><span class="dot" onclick="goTo(8)"></span><span class="dot" onclick="goTo(9)"></span><span class="dot" onclick="goTo(10)"></span><span class="dot" onclick="goTo(11)"></span><span class="dot" onclick="goTo(12)"></span><span class="dot" onclick="goTo(13)"></span><span class="dot" onclick="goTo(14)"></span><span class="dot" onclick="goTo(15)"></span><span class="dot" onclick="goTo(16)"></span><span class="dot" onclick="goTo(17)"></span><span class="dot" onclick="goTo(18)"></span><span class="dot" onclick="goTo(19)"></span><span class="dot" onclick="goTo(20)"></span><span class="dot" onclick="goTo(21)"></span><span class="dot" onclick="goTo(22)"></span><span class="dot" onclick="goTo(23)"></span><span class="dot" onclick="goTo(24)"></span><span class="dot" onclick="goTo(25)"></span><span class="dot" onclick="goTo(26)"></span><span class="dot" onclick="goTo(27)"></span></div>
+    <button class="nav-btn primary" onclick="next()">Next →</button>
+  </div>
+</div>
+<div class="panel" id="panel-2" style="display:none">
+  <div class="panel-meta">
+    
+      </div>
+    </div>
+  </div>
+<script>
+
+let requestCounter = 5;
+
+const newRequestBtn = document.querySelector(".btn.btn-primary");
+const tableBody = document.querySelector(".tbl tbody");
+
+newRequestBtn.addEventListener("click", function(){
+
+    const customerNames = ["Rahul Verma","Neha Kapoor","Arjun Patel","Kavya Nair","Rohit Singh"];
+    const phones = ["+91 9988776655","+91 9876543210","+91 9123456780","+91 9090909090","+91 9345678123"];
+    const amounts = [5000,12000,18000,7500,22000];
+
+    const i = Math.floor(Math.random()*customerNames.length);
+
+    const today = new Date();
+    const sentDate = today.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
+
+    const due = new Date();
+    due.setDate(due.getDate()+7);
+    const dueDate = due.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
+
+    const refId = "REQ-2024" + String(requestCounter).padStart(4,"0");
+
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+        <td><input type="checkbox"></td>
+        <td style="font-weight:600; color:#0f3460;">${refId}</td>
+        <td>
+            <div style="font-weight:600;">${customerNames[i]}</div>
+            <div style="font-size:0.72rem; color:#888;">${phones[i]}</div>
+        </td>
+        <td>₹ ${amounts[i].toLocaleString()}</td>
+        <td>₹ 0</td>
+        <td>—</td>
+        <td><span class="pill pill-pending">Pending</span></td>
+        <td>${sentDate}</td>
+        <td>${dueDate}</td>
+        <td>
+            <a href="#" style="font-size:0.78rem; color:#0f3460;">View</a>
+            &nbsp;
+            <a href="#" style="font-size:0.78rem; color:#e94560;">Remind</a>
+        </td>
+    `;
+
+    tableBody.prepend(row);
+
+    requestCounter++;
+
+});
+
+</script>
+</body>
+</html>
